@@ -2,7 +2,7 @@
 
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
-  Box,
+  Alert,
   Button,
   IconButton,
   InputAdornment,
@@ -11,22 +11,32 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import LockOutlineSharpIcon from "@mui/icons-material/LockOutlineSharp";
 import EmailSharpIcon from "@mui/icons-material/EmailSharp";
 import { linkStyle } from "@/app/_const/css";
+import {
+  signupAction,
+  signupActionInitialValue,
+} from "@/app/_actions/auth/signup";
+import { signinPagePath } from "@/app/_const/auth";
 
 export const Signup = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
+
+  const [state, dispatchAction, isPending] = useActionState(
+    signupAction,
+    signupActionInitialValue,
+  );
   return (
     <>
-      {/* {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )} */}
+      {!state.success && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {state.message}
+        </Alert>
+      )}
       <Typography variant="h4" gutterBottom>
         Create your account
       </Typography>
@@ -35,10 +45,9 @@ export const Signup = () => {
         Start tracking your income, expenses, and monthly balance.{" "}
       </Typography>
 
-      <Box component="form" onSubmit={(e) => e.preventDefault()}>
+      <form action={dispatchAction}>
         <TextField
           fullWidth
-          required
           name="email"
           label="Email address"
           type="email"
@@ -52,16 +61,21 @@ export const Signup = () => {
                 </InputAdornment>
               ),
             },
+            formHelperText: {
+              sx: {
+                whiteSpace: "pre-line",
+              },
+            },
           }}
+          error={state.fieldErrors.email.length > 0}
+          helperText={state.fieldErrors.email.join("\n")}
         />
 
         <TextField
           fullWidth
-          required
           name="password"
           label="Password"
           type={showPassword ? "text" : "password"}
-          autoComplete="new-password"
           margin="normal"
           slotProps={{
             input: {
@@ -84,15 +98,20 @@ export const Signup = () => {
                 </InputAdornment>
               ),
             },
+            formHelperText: {
+              sx: {
+                whiteSpace: "pre-line",
+              },
+            },
           }}
+          error={state.fieldErrors.password.length > 0}
+          helperText={state.fieldErrors.password.join("\n")}
         />
         <TextField
           fullWidth
-          required
           name="confirmPassword"
           label="Confirm Password"
-          type={showConfirmPassword ? "text" : "password"}
-          autoComplete="new-password"
+          type={showPassword ? "text" : "password"}
           margin="normal"
           slotProps={{
             input: {
@@ -107,7 +126,9 @@ export const Signup = () => {
                     onClick={() => setShowConfirmPassword((prev) => !prev)}
                     edge="end"
                     aria-label={
-                      showConfirmPassword ? "Hide password" : "Show password"
+                      showPassword
+                        ? "Hide confirm password"
+                        : "Show confirm password"
                     }
                   >
                     {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
@@ -115,7 +136,14 @@ export const Signup = () => {
                 </InputAdornment>
               ),
             },
+            formHelperText: {
+              sx: {
+                whiteSpace: "pre-line",
+              },
+            },
           }}
+          error={state.fieldErrors.confirmPassword.length > 0}
+          helperText={state.fieldErrors.confirmPassword.join("\n")}
         />
 
         <Button
@@ -123,7 +151,7 @@ export const Signup = () => {
           type="submit"
           variant="contained"
           size="large"
-          // disabled={isLoading}
+          disabled={isPending}
           sx={{
             mt: 4,
             minHeight: 50,
@@ -133,8 +161,7 @@ export const Signup = () => {
             fontWeight: 700,
           }}
         >
-          Sign up
-          {/* {isLoading ? "Signing in..." : "Sign in"} */}
+          {isPending ? "Signing up..." : "Sign up"}
         </Button>
 
         <Typography
@@ -144,11 +171,20 @@ export const Signup = () => {
           sx={{ mt: 4 }}
         >
           Already have an account?
-          <Link href="/auth/signin" style={{ ...linkStyle, marginLeft: 8 }}>
+          <Link
+            href={signinPagePath}
+            style={{
+              ...linkStyle,
+              marginLeft: 8,
+              pointerEvents: isPending ? "none" : "auto",
+              opacity: isPending ? 0.5 : 1,
+              cursor: isPending ? "not-allowed" : "pointer",
+            }}
+          >
             Sign in
           </Link>
         </Typography>
-      </Box>
+      </form>
     </>
   );
 };

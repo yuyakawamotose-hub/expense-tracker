@@ -2,7 +2,7 @@
 
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
-  Box,
+  Alert,
   Button,
   IconButton,
   InputAdornment,
@@ -10,20 +10,30 @@ import {
   Typography,
 } from "@mui/material";
 import Link from "next/link";
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import LockOutlineSharpIcon from "@mui/icons-material/LockOutlineSharp";
 import EmailSharpIcon from "@mui/icons-material/EmailSharp";
 import { linkStyle } from "@/app/_const/css";
+import {
+  signinAction,
+  signinActionInitialValue,
+} from "@/app/_actions/auth/signin";
+import { forgetPasswordPagePath, signupPagePath } from "@/app/_const/auth";
 
 export const Signin = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [state, dispatchAction, isPending] = useActionState(
+    signinAction,
+    signinActionInitialValue,
+  );
+
   return (
     <>
-      {/* {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )} */}
+      {!state.success && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {state.message}
+        </Alert>
+      )}
       <Typography variant="h4" gutterBottom>
         Welcome back
       </Typography>
@@ -32,10 +42,9 @@ export const Signin = () => {
         Sign in to manage your expenses and monthly balance.
       </Typography>
 
-      <Box component="form" onSubmit={(e) => e.preventDefault()}>
+      <form action={dispatchAction}>
         <TextField
           fullWidth
-          required
           name="email"
           label="Email address"
           type="email"
@@ -49,12 +58,18 @@ export const Signin = () => {
                 </InputAdornment>
               ),
             },
+            formHelperText: {
+              sx: {
+                whiteSpace: "pre-line",
+              },
+            },
           }}
+          error={state.fieldErrors.email.length > 0}
+          helperText={state.fieldErrors.email.join("\n")}
         />
 
         <TextField
           fullWidth
-          required
           name="password"
           label="Password"
           type={showPassword ? "text" : "password"}
@@ -81,11 +96,26 @@ export const Signin = () => {
                 </InputAdornment>
               ),
             },
+            formHelperText: {
+              sx: {
+                whiteSpace: "pre-line",
+              },
+            },
           }}
+          error={state.fieldErrors.password.length > 0}
+          helperText={state.fieldErrors.password.join("\n")}
         />
 
         <Typography color="text.secondary" variant="body2">
-          <Link href="/forgot-password" style={linkStyle}>
+          <Link
+            href={forgetPasswordPagePath}
+            style={{
+              ...linkStyle,
+              pointerEvents: isPending ? "none" : "auto",
+              opacity: isPending ? 0.5 : 1,
+              cursor: isPending ? "not-allowed" : "pointer",
+            }}
+          >
             Forgot password
           </Link>
         </Typography>
@@ -95,7 +125,7 @@ export const Signin = () => {
           type="submit"
           variant="contained"
           size="large"
-          // disabled={isLoading}
+          disabled={isPending}
           sx={{
             mt: 4,
             minHeight: 50,
@@ -105,8 +135,7 @@ export const Signin = () => {
             fontWeight: 700,
           }}
         >
-          Sign in
-          {/* {isLoading ? "Signing in..." : "Sign in"} */}
+          {isPending ? "Signing in..." : "Sign in"}
         </Button>
 
         <Typography
@@ -116,11 +145,20 @@ export const Signin = () => {
           sx={{ mt: 4 }}
         >
           Don&apos;t have an account?
-          <Link href="/auth/signup" style={{ ...linkStyle, marginLeft: 8 }}>
+          <Link
+            href={signupPagePath}
+            style={{
+              ...linkStyle,
+              marginLeft: 8,
+              pointerEvents: isPending ? "none" : "auto",
+              opacity: isPending ? 0.5 : 1,
+              cursor: isPending ? "not-allowed" : "pointer",
+            }}
+          >
             Create an account
           </Link>
         </Typography>
-      </Box>
+      </form>
     </>
   );
 };
