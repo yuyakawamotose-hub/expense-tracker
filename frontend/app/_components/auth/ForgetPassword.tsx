@@ -10,10 +10,8 @@ import {
 import Link from "next/link";
 import EmailSharpIcon from "@mui/icons-material/EmailSharp";
 import { linkStyle } from "@/app/_const/css";
-import {
-  forgetPasswordAction,
-  forgetPasswordActionInitialValue,
-} from "@/app/_actions/auth/forgetPassword";
+import { forgetPasswordAction } from "@/app/_actions/auth/forgetPassword";
+import { forgetPasswordActionInitialValue } from "@/app/_const/authActionState";
 import { useActionState } from "react";
 import { signinPagePath } from "@/app/_const/auth";
 

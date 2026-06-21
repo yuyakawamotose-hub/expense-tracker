@@ -1,46 +1,62 @@
-import { signinPagePath } from "@/app/_const/auth";
+"use server";
+
+import {
+  nestServerBaseUrl,
+  nestSignupPath,
+  signinPagePath,
+} from "@/app/_const/auth";
+import { createSignupActionInitialValue } from "@/app/_const/auth";
+import { SignupActionInitialValueType } from "@/app/_types/auth";
 import { redirect } from "next/navigation";
 
-export type signupActionInitialValueType = {
-  success: boolean;
-  message: string;
-  fieldErrors: {
-    email: string[];
-    password: string[];
-    confirmPassword: string[];
-  };
-};
+import { MessageType } from "@/app/_const/auth";
 
-export const signupActionInitialValue: signupActionInitialValueType = {
-  success: true,
-  message: "",
-  fieldErrors: {
-    email: [],
-    password: [],
-    confirmPassword: [],
-  },
-};
+export const signupAction = async (
+  previousState: SignupActionInitialValueType,
+  formData: FormData,
+): Promise<SignupActionInitialValueType> => {
+  const currentStatus = createSignupActionInitialValue();
+  const email: string = String(formData.get("email") ?? "");
+  const password: string = String(formData.get("password") ?? "");
+  const confirmPassword: string = String(formData.get("confirmPassword") ?? "");
 
-export const signupAction = async (): Promise<signupActionInitialValueType> => {
-  console.log("signup action");
-  let isSuccess = false;
+  if (password !== confirmPassword) {
+    currentStatus.fieldErrors.confirmPassword.push(
+      "Confirm password is not match with password",
+    );
 
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-  isSuccess = true;
+    return currentStatus;
+  }
 
-  if (!isSuccess)
-    return {
-      success: false,
-      message: "Something went wrong. Please try again later.111",
-      fieldErrors: {
-        email: ["email error 111", "email error 222"],
-        password: ["password error 111", "password error 222"],
-        confirmPassword: [
-          "confirm password error 111",
-          "confirm password error 222",
-        ],
-      },
-    };
+  const res = await fetch(nestServerBaseUrl + nestSignupPath, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  });
 
-  redirect(signinPagePath);
+  if (res.ok) redirect(signinPagePath);
+
+  currentStatus.success = res.ok;
+
+  const json = await res.json();
+
+  if (!Array.isArray(json.message)) currentStatus.message = json.message;
+  else {
+    if (json.message.length > 0) {
+      for (const message of json.message) {
+        if (message.toLowerCase().includes(MessageType.EMAIL)) {
+          currentStatus.fieldErrors[MessageType.EMAIL].push(message);
+          continue;
+        }
+        if (message.toLowerCase().includes(MessageType.PASSWORD)) {
+          currentStatus.fieldErrors[MessageType.PASSWORD].push(message);
+          continue;
+        }
+      }
+    }
+  }
+
+  return currentStatus;
 };

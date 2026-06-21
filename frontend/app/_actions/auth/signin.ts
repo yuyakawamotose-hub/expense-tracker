@@ -1,39 +1,60 @@
+"use server";
+
+import {
+  createSigninActionInitialValue,
+  MessageType,
+  nestServerBaseUrl,
+  nestSigninPath,
+} from "@/app/_const/auth";
+import { SigninActionInitialValueType } from "@/app/_types/auth";
 import { redirect } from "next/navigation";
 
-export type signinActionInitialValueType = {
-  success: boolean;
-  message: string;
-  fieldErrors: {
-    email: string[];
-    password: string[];
-  };
-};
-
-export const signinActionInitialValue: signinActionInitialValueType = {
-  success: true,
-  message: "",
-  fieldErrors: {
-    email: [],
-    password: [],
-  },
-};
-
-export const signinAction = async (): Promise<signinActionInitialValueType> => {
+export const signinAction = async (
+  previousState: SigninActionInitialValueType,
+  formData: FormData,
+): Promise<SigninActionInitialValueType> => {
   console.log("signin action");
-  let isSuccess = false;
+  const currentStatus = createSigninActionInitialValue();
+  const email: string = String(formData.get("email") ?? "");
+  const password: string = String(formData.get("password") ?? "");
 
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-  isSuccess = true;
+  console.log(currentStatus);
+  console.log(email);
+  console.log(password);
+  console.log(nestServerBaseUrl + nestSigninPath);
+  const res = await fetch(nestServerBaseUrl + nestSigninPath, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  });
 
-  if (!isSuccess)
-    return {
-      success: false,
-      message: "Something went wrong. Please try again later.111",
-      fieldErrors: {
-        email: ["email error 111", "email error 222"],
-        password: ["password error 111", "password error 222"],
-      },
-    };
+  console.log("res");
+  console.log(res);
 
-  redirect("/");
+  // if (res.ok) redirect("/");
+
+  currentStatus.success = res.ok;
+
+  const json = await res.json();
+  console.log(json);
+
+  if (!Array.isArray(json.message)) currentStatus.message = json.message;
+  else {
+    if (json.message.length > 0) {
+      for (const message of json.message) {
+        if (message.toLowerCase().includes(MessageType.EMAIL)) {
+          currentStatus.fieldErrors[MessageType.EMAIL].push(message);
+          continue;
+        }
+        if (message.toLowerCase().includes(MessageType.PASSWORD)) {
+          currentStatus.fieldErrors[MessageType.PASSWORD].push(message);
+          continue;
+        }
+      }
+    }
+  }
+
+  return currentStatus;
 };

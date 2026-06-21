@@ -14,14 +14,16 @@ import { useActionState, useState } from "react";
 import LockOutlineSharpIcon from "@mui/icons-material/LockOutlineSharp";
 import EmailSharpIcon from "@mui/icons-material/EmailSharp";
 import { linkStyle } from "@/app/_const/css";
+import { signinAction } from "@/app/_actions/auth/signin";
 import {
-  signinAction,
-  signinActionInitialValue,
-} from "@/app/_actions/auth/signin";
-import { forgetPasswordPagePath, signupPagePath } from "@/app/_const/auth";
+  forgetPasswordPagePath,
+  createSigninActionInitialValue,
+  signupPagePath,
+} from "@/app/_const/auth";
 
 export const Signin = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const signinActionInitialValue = createSigninActionInitialValue();
   const [state, dispatchAction, isPending] = useActionState(
     signinAction,
     signinActionInitialValue,
@@ -29,7 +31,7 @@ export const Signin = () => {
 
   return (
     <>
-      {!state.success && (
+      {state.success === false && state.success && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {state.message}
         </Alert>
@@ -47,8 +49,7 @@ export const Signin = () => {
           fullWidth
           name="email"
           label="Email address"
-          type="email"
-          autoComplete="email"
+          type="text"
           margin="normal"
           slotProps={{
             input: {
