@@ -13,15 +13,10 @@ export const signinAction = async (
   previousState: SigninActionInitialValueType,
   formData: FormData,
 ): Promise<SigninActionInitialValueType> => {
-  console.log("signin action");
   const currentStatus = createSigninActionInitialValue();
   const email: string = String(formData.get("email") ?? "");
   const password: string = String(formData.get("password") ?? "");
 
-  console.log(currentStatus);
-  console.log(email);
-  console.log(password);
-  console.log(nestServerBaseUrl + nestSigninPath);
   const res = await fetch(nestServerBaseUrl + nestSigninPath, {
     method: "POST",
     headers: {
@@ -30,17 +25,17 @@ export const signinAction = async (
     body: JSON.stringify({ email, password }),
   });
 
-  console.log("res");
-  console.log(res);
-
-  // if (res.ok) redirect("/");
-
-  currentStatus.success = res.ok;
+  // Valid credential
+  if (res.ok) redirect("/");
 
   const json = await res.json();
-  console.log(json);
 
-  if (!Array.isArray(json.message)) currentStatus.message = json.message;
+  // Credential Error
+  if (!Array.isArray(json.message)) {
+    currentStatus.success = res.ok;
+    currentStatus.message = json.message;
+  }
+  // Validation Error
   else {
     if (json.message.length > 0) {
       for (const message of json.message) {

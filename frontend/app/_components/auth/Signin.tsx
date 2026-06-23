@@ -23,6 +23,7 @@ import {
 
 export const Signin = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [email, setEmail] = useState("");
   const signinActionInitialValue = createSigninActionInitialValue();
   const [state, dispatchAction, isPending] = useActionState(
     signinAction,
@@ -31,7 +32,7 @@ export const Signin = () => {
 
   return (
     <>
-      {state.success === false && state.success && (
+      {state.success === false && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {state.message}
         </Alert>
@@ -50,6 +51,8 @@ export const Signin = () => {
           name="email"
           label="Email address"
           type="text"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
           margin="normal"
           slotProps={{
             input: {
@@ -74,7 +77,7 @@ export const Signin = () => {
           name="password"
           label="Password"
           type={showPassword ? "text" : "password"}
-          autoComplete="new-password"
+          autoComplete="current-password"
           margin="normal"
           slotProps={{
             input: {
