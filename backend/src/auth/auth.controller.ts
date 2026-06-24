@@ -27,7 +27,7 @@ export class AuthController {
   async signin(
     @Body() signupDto: SignupDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<string> {
+  ): Promise<{ accessToken: string }> {
     console.log('signin');
     const { email, password } = signupDto;
     const user = await this.userService.findUserByUsername(email);
@@ -49,13 +49,17 @@ export class AuthController {
     console.log(accessToken);
 
     // Set JWT on Cookie
-    res.cookie('accessToken', accessToken, {
+    res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      // secure: process.env.NODE_ENV === 'production',
+      secure: false,
       sameSite: 'lax',
+      path: '/',
     });
 
-    return 'Login Successfully';
+    console.log(res.getHeaders());
+
+    return { accessToken };
   }
 
   @Post('signup')
@@ -72,13 +76,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@Req() req) {
-    // const user = req.user as {
-    //   userId: number;
-    //   username: string;
-    // };
-
-    // console.log(req);
-
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     return req.user;
   }
