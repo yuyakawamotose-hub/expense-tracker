@@ -54,9 +54,19 @@ export class AuthService {
     return hashedPassword;
   }
 
-  async generateJwt(user: User): Promise<string> {
+  async generateJwt(
+    user: {
+      email: string;
+      name: string | null;
+      id: number;
+    },
+    signinOption: {
+      secret: string;
+      expireIn: string;
+    },
+  ): Promise<string> {
     const payload = { sub: user.id, username: user.email };
-    const jwt = await this.jwtService.signAsync(payload);
+    const jwt = await this.jwtService.signAsync(payload, signinOption);
 
     return jwt;
   }

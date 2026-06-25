@@ -21,10 +21,10 @@ import {
   signupPagePath,
 } from "@/app/_const/auth";
 
+const signinActionInitialValue = createSigninActionInitialValue();
 export const Signin = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [email, setEmail] = useState("");
-  const signinActionInitialValue = createSigninActionInitialValue();
   const [state, dispatchAction, isPending] = useActionState(
     signinAction,
     signinActionInitialValue,

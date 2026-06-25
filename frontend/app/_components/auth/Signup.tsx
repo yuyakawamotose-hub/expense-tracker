@@ -25,7 +25,7 @@ export const Signup = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
-
+  const [email, setEmail] = useState("");
   const [state, dispatchAction, isPending] = useActionState(
     signupAction,
     initStateValue,
@@ -51,6 +51,8 @@ export const Signup = () => {
           name="email"
           label="Email address"
           type="text"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
           margin="normal"
           slotProps={{
             input: {

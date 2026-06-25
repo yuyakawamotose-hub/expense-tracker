@@ -38,12 +38,12 @@ export const signupAction = async (
 
   if (res.ok) redirect(signinPagePath);
 
-  currentStatus.success = res.ok;
-
   const json = await res.json();
 
-  if (!Array.isArray(json.message)) currentStatus.message = json.message;
-  else {
+  if (!Array.isArray(json.message)) {
+    currentStatus.success = res.ok;
+    currentStatus.message = json.message;
+  } else {
     if (json.message.length > 0) {
       for (const message of json.message) {
         if (message.toLowerCase().includes(MessageType.EMAIL)) {

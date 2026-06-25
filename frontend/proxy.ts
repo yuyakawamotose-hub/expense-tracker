@@ -13,8 +13,9 @@ export async function proxy(request: NextRequest) {
   // const token: string = "sadfdas";
   const token = request.cookies.get("access_token")?.value;
 
+  const refreshToken = request.cookies.get("refresh_access_token")?.value;
   // Cookie 自体がない
-  if (!token) {
+  if (!token || !refreshToken) {
     return NextResponse.redirect(new URL(signupPagePath, request.url));
   }
 

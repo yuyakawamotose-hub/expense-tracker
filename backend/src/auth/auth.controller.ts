@@ -14,6 +14,13 @@ import { SignupDto } from './dto/signup.dto';
 import { UserService } from 'src/user/user.service';
 import type { Response } from 'express';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
+import { LocalAuthGuard } from './guard/local-auth.guard';
+import {
+  JWT_EXPIRES_IN,
+  JWT_SECRET,
+  REFRESH_JWT_EXPIRES_IN,
+  REFRESH_JWT_SECRET,
+} from './constants';
 
 @Controller('auth')
 export class AuthController {
@@ -23,30 +30,21 @@ export class AuthController {
   ) {}
 
   @Post('signin')
-  // @UseGuards(LocalAuthGuard)
+  @UseGuards(LocalAuthGuard)
   async signin(
-    @Body() signupDto: SignupDto,
+    @Req() req: any,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     console.log('signin');
-    const { email, password } = signupDto;
-    const user = await this.userService.findUserByUsername(email);
 
-    if (!user) throw new UnauthorizedException('Please check credential');
-
-    const matchPassword = await this.authService.matchPassword(
-      password,
-      user.password,
-    );
-
-    if (!matchPassword)
-      throw new UnauthorizedException('Please check credential');
-    console.log('token');
-
-    const accessToken = await this.authService.generateJwt(user);
-
-    console.log('jwt');
-    console.log(accessToken);
+    const accessToken = await this.authService.generateJwt(req.user, {
+      secret: JWT_SECRET,
+      expireIn: JWT_EXPIRES_IN,
+    });
+    const refreshToken = await this.authService.generateJwt(req.user, {
+      secret: REFRESH_JWT_SECRET,
+      expireIn: REFRESH_JWT_EXPIRES_IN,
+    });
 
     // Set JWT on Cookie
     res.cookie('access_token', accessToken, {
@@ -57,18 +55,27 @@ export class AuthController {
       path: '/',
     });
 
-    console.log(res.getHeaders());
+    res.cookie('refresh_access_token', refreshToken, {
+      httpOnly: true,
+      // secure: process.env.NODE_ENV === 'production',
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+    });
 
-    return { accessToken };
+    return { accessToken, refreshToken };
   }
 
   @Post('signup')
   async signUp(@Body() signupDto: SignupDto): Promise<void> {
+    console.log('signup');
     const { email } = signupDto;
     const user = await this.userService.findUserByUsername(email);
 
     if (user)
       throw new ConflictException('This email address is already registered.');
+
+    await this.authService.signup(signupDto);
 
     return;
   }
@@ -77,6 +84,8 @@ export class AuthController {
   @Get('me')
   getMe(@Req() req) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+
+    // Regenerate
     return req.user;
   }
 }

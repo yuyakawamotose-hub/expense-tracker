@@ -32,14 +32,20 @@ export const signinAction = async (
   // Set Jwt to Cookie
   if (res.ok) {
     const cookieStore = await cookies();
-    const { accessToken } = await res.json();
+    const { accessToken, refreshToken } = await res.json();
 
     cookieStore.set("access_token", accessToken, {
       httpOnly: true,
       secure: false, // localhost 開発中
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60,
+    });
+
+    cookieStore.set("access_token", refreshToken, {
+      httpOnly: true,
+      secure: false, // localhost 開発中
+      sameSite: "lax",
+      path: "/",
     });
 
     redirect("/");
